@@ -29,7 +29,7 @@ const Page = (props: Props) => {
     // Replace with actual fetch request
     const fetchedTickets = await fetch("/api/tickets");
     const ticketsData = await fetchedTickets.json();
-    setTickets(ticketsData);
+    setTickets(ticketsData?.tickets);
   }
 
   // Fetch users (replace with actual API call)
