@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum TicketStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+model User {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String           @unique
+  password  String
+  role      Role             @default(CUSTOMER)
+  tickets   Ticket[]         @relation("CustomerTickets") // User's created tickets
+  responses TicketResponse[]
+}
+
+model Ticket {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  subject     String
+  description String
+  status      TicketStatus     @default(OPEN)
+  customerId  String           @db.ObjectId
+  customer    User             @relation("CustomerTickets", fields: [customerId], references: [id])
+  responses   TicketResponse[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model TicketResponse {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  message   String
+  ticketId  String   @db.ObjectId
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  adminId   String   @db.ObjectId
+  admin     User     @relation(fields: [adminId], references: [id])
+  createdAt DateTime @default(now())
+}

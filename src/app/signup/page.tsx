@@ -1,20 +1,60 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Signup() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "CUSTOMER",
+  });
+
+  const router = useRouter();
+
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (res.ok) {
+      router.push("/login");
+    } else {
+      const errorData = await res.json();
+      alert(errorData.error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold text-center mb-6">Sign Up</h2>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="name">
               Name
             </label>
             <input
               type="text"
-              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               placeholder="Enter your name"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div className="mb-4">
@@ -23,9 +63,12 @@ export default function Signup() {
             </label>
             <input
               type="email"
-              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="Enter your email"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div className="mb-4">
@@ -34,9 +77,12 @@ export default function Signup() {
             </label>
             <input
               type="password"
-              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               placeholder="Enter your password"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           <div className="mb-6">
@@ -44,11 +90,14 @@ export default function Signup() {
               Role
             </label>
             <select
-              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
+              <option value="CUSTOMER">User</option>
+              <option value="ADMIN">Admin</option>
             </select>
           </div>
           <button

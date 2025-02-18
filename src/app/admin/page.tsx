@@ -1,12 +1,73 @@
-import React from "react";
+"use client";
+import Navbar from "@/components/Navbar";
+import React, { useEffect, useState } from "react";
 
 type Props = {};
 
-const page = (props: Props) => {
-  const tickets: any = [];
-  const users: any = [];
+const Page = (props: Props) => {
+  // Use state to store tickets and users
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [status, setStatus] = useState("");
+
+  // Fetch tickets (replace with actual API call)
+  async function fetchTickets() {
+    // Replace with actual fetch request
+    const fetchedTickets = await fetch("/api/tickets");
+    const ticketsData = await fetchedTickets.json();
+    setTickets(ticketsData);
+  }
+
+  // Fetch users (replace with actual API call)
+  async function fetchUsers() {
+    // Replace with actual fetch request
+    const fetchedUsers = await fetch("/api/users");
+    const usersData = await fetchedUsers.json();
+    console.log(usersData);
+    setUsers(usersData);
+  }
+
+  const statusUpdate = async (id: any, status: string) => {
+    await fetch(`/api/ticket-status`, {
+      method: "PUT",
+      body: JSON.stringify({ id, status }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Optionally, re-fetch the tickets to update UI after the reply
+    await fetchTickets();
+  };
+
+  useEffect(() => {
+    fetchTickets();
+    fetchUsers();
+  }, []);
+
+  const handleReplySubmit = async (e: React.FormEvent, ticketId: number) => {
+    e.preventDefault();
+    const form = new FormData(e.target as HTMLFormElement);
+    const message = form.get("reply") as string;
+    // const status = form.get("status") as string;
+
+    // Make API request to submit the reply (replace with actual API call)
+    await fetch(`/api/tickets/reply`, {
+      method: "POST",
+      body: JSON.stringify({ ticketId, message }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Optionally, re-fetch the tickets to update UI after the reply
+    await fetchTickets();
+  };
+
   return (
     <div className="max-w-4xl mx-auto py-8">
+      <Navbar />
+      {/* Ticket Section */}
       {tickets.length === 0 ? (
         <p>No tickets available.</p>
       ) : (
@@ -24,7 +85,7 @@ const page = (props: Props) => {
               </p>
 
               <h3 className="font-semibold mt-3">Responses:</h3>
-              <ul className="text-sm">
+              <ul className="text-sm py-2">
                 {ticket.responses.length === 0 ? (
                   <li className="text-gray-500">No replies yet.</li>
                 ) : (
@@ -40,7 +101,24 @@ const page = (props: Props) => {
               </ul>
 
               {/* Reply Form */}
-              <form className="mt-4 space-y-2">
+              <select
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                  statusUpdate(ticket.id, e.target.value);
+                }}
+                name="status"
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="">Change Status (Optional)</option>
+                <option value="OPEN">Open</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+              <form
+                className="mt-4 space-y-2"
+                onSubmit={(e) => handleReplySubmit(e, ticket.id)}
+              >
                 <input type="hidden" name="ticketId" value={ticket.id} />
                 <textarea
                   name="reply"
@@ -48,12 +126,7 @@ const page = (props: Props) => {
                   className="w-full p-2 border rounded-lg"
                   required
                 ></textarea>
-                <select name="status" className="w-full p-2 border rounded-lg">
-                  <option value="">Change Status (Optional)</option>
-                  <option value="OPEN">Open</option>
-                  <option value="RESOLVED">Resolved</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
+
                 <button
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
@@ -66,6 +139,7 @@ const page = (props: Props) => {
         </div>
       )}
 
+      {/* User Section */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-xl font-semibold mb-3">All Users</h2>
         <ul className="space-y-2">
@@ -80,4 +154,4 @@ const page = (props: Props) => {
   );
 };
 
-export default page;
+export default Page;
