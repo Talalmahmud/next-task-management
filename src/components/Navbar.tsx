@@ -9,7 +9,7 @@ export default function Navbar() {
   };
 
   return (
-    <div className="flex mb-6 justify-between items-center">
+    <div className="flex sticky top-0 left-0 mb-6 justify-between items-center bg-white py-4 shadow-md">
       <h1 className="text-3xl font-bold">Ticket Management</h1>
       <form onSubmit={handleLogout}>
         <button
