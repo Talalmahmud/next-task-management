@@ -3,8 +3,15 @@ import { getSession } from "@/lib/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // Get All Tickets
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get("page") || "1", 10); // Default to page 1 if not provided
+    const limit = parseInt(url.searchParams.get("limit") || "10", 10); // Default to 10 tickets per page
+
+    // Calculate offset based on page and limit
+    const skip = (page - 1) * limit;
+
     const tickets = await prisma.ticket.findMany({
       include: {
         customer: true, // Fetch the associated customer (user) for each ticket
@@ -12,11 +19,27 @@ export async function GET() {
           include: {
             admin: true, // Fetch the associated admin for each response
           },
+          orderBy: {
+            createdAt: "desc", // Sort responses by creation date in descending order (newest first)
+          },
         },
       },
+      orderBy: {
+        createdAt: "desc", // Sort tickets by creation date in descending order (newest first)
+      },
+      skip, // Skip the first 'skip' tickets
+      take: limit, // Take 'limit' number of tickets
     });
 
-    return NextResponse.json(tickets);
+    // Get the total count of tickets for pagination
+    const totalTickets = await prisma.ticket.count();
+
+    return NextResponse.json({
+      tickets,
+      totalTickets,
+      totalPages: Math.ceil(totalTickets / limit), // Calculate total pages
+      currentPage: page, // Include the current page in the response
+    });
   } catch (error) {
     console.error("Error fetching tickets:", error);
     return NextResponse.json(

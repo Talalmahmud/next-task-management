@@ -63,6 +63,13 @@ const Page = () => {
       alert("There was an error submitting the ticket.");
     }
   };
+
+  const deleteTicket = async (id: any) => {
+    const res = await fetch("/api/tickets/?id=" + id, {
+      method: "DELETE",
+    });
+    await fetchTickets();
+  };
   useEffect(() => {
     fetchTickets();
   }, []);
@@ -107,21 +114,29 @@ const Page = () => {
         <p>No tickets created yet.</p>
       ) : (
         <div className="space-y-4">
-          {tickets.map((ticket) => (
+          {tickets?.map((ticket) => (
             <div
               key={ticket.id}
               className="border p-4 rounded-lg shadow-md bg-white"
             >
-              <h2 className="text-xl font-semibold">{ticket.subject}</h2>
-              <p className="text-gray-600">{ticket.description}</p>
-              <p className="text-sm text-gray-500">Status: {ticket.status}</p>
+              <div className=" flex justify-between ">
+                <h2 className="text-xl font-semibold">{ticket?.subject}</h2>
+                <button
+                  onClick={() => deleteTicket(ticket?.id)}
+                  className=" text-white bg-red-500 rounded-md px-2 py-1"
+                >
+                  delete
+                </button>
+              </div>
+              <p className="text-gray-600">{ticket?.description}</p>
+              <p className="text-sm text-gray-500">Status: {ticket?.status}</p>
 
               <h3 className="font-semibold mt-3">Replies:</h3>
               <ul className="text-sm">
-                {ticket.responses.length === 0 ? (
+                {ticket?.responses?.length === 0 ? (
                   <li className="text-gray-500">No replies yet.</li>
                 ) : (
-                  ticket.responses.map((resp, index: number) => (
+                  ticket?.responses?.map((resp, index: number) => (
                     <li key={index} className="border-l-4 pl-2 mt-1">
                       {resp.message} -{" "}
                       <span className="text-gray-500">

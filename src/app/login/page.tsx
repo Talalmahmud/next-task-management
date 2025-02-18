@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import Form from "next/form";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -8,8 +8,10 @@ import { useRouter } from "next/navigation";
 type Props = {};
 
 const LoginPage = (props: Props) => {
+  const [isLogging, setIslogging] = useState(false);
   const router = useRouter();
   const userLogin = async (formdata: FormData) => {
+    setIslogging(true);
     const email = formdata.get("email");
     const password = formdata.get("password");
     const res = await signIn("credentials", {
@@ -17,6 +19,7 @@ const LoginPage = (props: Props) => {
       password,
       redirect: false,
     });
+    setIslogging(false);
     if (res?.ok) {
       router.push("/admin");
     }
@@ -54,10 +57,11 @@ const LoginPage = (props: Props) => {
             />
           </div>
           <button
+            disabled={isLogging}
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"
           >
-            Login
+            {isLogging ? "Logging.." : "Login"}
           </button>
         </Form>
         <div className=" py-2">

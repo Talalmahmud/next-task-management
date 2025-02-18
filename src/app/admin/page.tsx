@@ -9,6 +9,20 @@ const Page = (props: Props) => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [status, setStatus] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const search = e.target.value.toLowerCase();
+    setSearchTerm(search);
+
+    const filtered = tickets.filter((ticket: any) => {
+      const subjectMatch = ticket.subject.toLowerCase().includes(search);
+      const emailMatch = ticket.customer.email.toLowerCase().includes(search);
+      return subjectMatch || emailMatch;
+    });
+
+    setTickets(filtered);
+  };
 
   // Fetch tickets (replace with actual API call)
   async function fetchTickets() {
@@ -40,6 +54,13 @@ const Page = (props: Props) => {
     await fetchTickets();
   };
 
+  const deleteTicket = async (id: any) => {
+    const res = await fetch("/api/tickets/?id=" + id, {
+      method: "DELETE",
+    });
+    await fetchTickets();
+  };
+
   useEffect(() => {
     fetchTickets();
     fetchUsers();
@@ -67,6 +88,15 @@ const Page = (props: Props) => {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <Navbar />
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="Search tickets by subject or customer email..."
+          className="w-full p-2 border rounded-lg"
+        />
+      </div>
       {/* Ticket Section */}
       {tickets.length === 0 ? (
         <p>No tickets available.</p>
@@ -77,7 +107,15 @@ const Page = (props: Props) => {
               key={ticket.id}
               className="border p-4 rounded-lg shadow-md bg-white"
             >
-              <h2 className="text-xl font-semibold">{ticket.subject}</h2>
+              <div className=" flex justify-between ">
+                <h2 className="text-xl font-semibold">{ticket?.subject}</h2>
+                <button
+                  onClick={() => deleteTicket(ticket?.id)}
+                  className=" text-white bg-red-500 rounded-md px-2 py-1"
+                >
+                  delete
+                </button>
+              </div>
               <p className="text-gray-600">{ticket.description}</p>
               <p className="text-sm text-gray-500">Status: {ticket.status}</p>
               <p className="text-sm text-gray-500">
