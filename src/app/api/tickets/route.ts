@@ -3,16 +3,82 @@ import { getSession } from "@/lib/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // Get All Tickets
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10); // Default to page 1 if not provided
     const limit = parseInt(url.searchParams.get("limit") || "10", 10); // Default to 10 tickets per page
+    const subject = url.searchParams.get("subject") || ""; // Filter by subject
+    const description = url.searchParams.get("description") || ""; // Filter by description
+    const status = url.searchParams.get("status"); // Filter by status (OPEN, RESOLVED, CLOSED)
+    const customerId = url.searchParams.get("customerId"); // Filter by customerId
+    const createdAtFrom = url.searchParams.get("createdAtFrom"); // Filter by createdAt from date
+    const createdAtTo = url.searchParams.get("createdAtTo"); // Filter by createdAt to date
+    const updatedAtFrom = url.searchParams.get("updatedAtFrom"); // Filter by updatedAt from date
+    const updatedAtTo = url.searchParams.get("updatedAtTo"); // Filter by updatedAt to date
 
     // Calculate offset based on page and limit
     const skip = (page - 1) * limit;
 
+    // Build where condition dynamically
+    let whereCondition: any = {};
+    if (customerId) {
+      whereCondition.customerId = session.user.id;
+    }
+
+    if (subject) {
+      whereCondition.subject = {
+        contains: subject, // Partial match
+        mode: "insensitive", // Case insensitive search
+      };
+    }
+
+    if (description) {
+      whereCondition.description = {
+        contains: description, // Partial match
+        mode: "insensitive", // Case insensitive search
+      };
+    }
+
+    if (status) {
+      whereCondition.status = status.toUpperCase(); // Filter by status (make sure to handle case)
+    }
+
+    if (customerId) {
+      whereCondition.customerId = customerId; // Filter by customerId
+    }
+
+    // Filter by createdAt date range if both dates are provided
+    if (createdAtFrom || createdAtTo) {
+      whereCondition.createdAt = {};
+      if (createdAtFrom) {
+        whereCondition.createdAt.gte = new Date(createdAtFrom);
+      }
+      if (createdAtTo) {
+        whereCondition.createdAt.lte = new Date(createdAtTo);
+      }
+    }
+
+    // Filter by updatedAt date range if both dates are provided
+    if (updatedAtFrom || updatedAtTo) {
+      whereCondition.updatedAt = {};
+      if (updatedAtFrom) {
+        whereCondition.updatedAt.gte = new Date(updatedAtFrom);
+      }
+      if (updatedAtTo) {
+        whereCondition.updatedAt.lte = new Date(updatedAtTo);
+      }
+    }
+
+    // Fetch tickets based on the dynamic whereCondition (or all tickets if no filter is provided)
     const tickets = await prisma.ticket.findMany({
+      where: whereCondition, // Will return all tickets if no filters are applied
       include: {
         customer: true, // Fetch the associated customer (user) for each ticket
         responses: {
@@ -31,8 +97,10 @@ export async function GET(req: Request) {
       take: limit, // Take 'limit' number of tickets
     });
 
-    // Get the total count of tickets for pagination
-    const totalTickets = await prisma.ticket.count();
+    // Get the total count of tickets for pagination (using the same whereCondition)
+    const totalTickets = await prisma.ticket.count({
+      where: whereCondition, // Ensure count is done with the same filter
+    });
 
     return NextResponse.json({
       tickets,

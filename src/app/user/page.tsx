@@ -7,6 +7,7 @@ type Ticket = {
   subject: string;
   description: string;
   status: string;
+  createdAt: string;
   responses: {
     message: string;
     admin?: {
@@ -19,10 +20,21 @@ const Page = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("");
+  const [createdAtFrom, setCreatedAtFrom] = useState("");
+  const [createdAtTo, setCreatedAtTo] = useState("");
 
   async function fetchTickets() {
-    // Replace with actual fetch request
-    const fetchedTickets = await fetch("/api/customer-ticket");
+    const queryParams = new URLSearchParams({
+      subject,
+      status,
+      createdAtFrom,
+      createdAtTo,
+    });
+
+    const fetchedTickets = await fetch(
+      `/api/tickets?${queryParams.toString()}`
+    );
     const ticketsData = await fetchedTickets.json();
     setTickets(ticketsData?.tickets);
   }
@@ -70,9 +82,10 @@ const Page = () => {
     });
     await fetchTickets();
   };
+
   useEffect(() => {
     fetchTickets();
-  }, []);
+  }, [subject, status, createdAtFrom, createdAtTo]);
 
   return (
     <div className="max-w-4xl mx-auto py-8">
@@ -109,6 +122,62 @@ const Page = () => {
         </button>
       </form>
 
+      {/* Filters Section */}
+      <div className="bg-gray-100 p-4 rounded-lg mb-6">
+        <h2 className="text-xl font-semibold mb-3">Filter Tickets</h2>
+
+        {/* Filter by Subject */}
+        <input
+          type="text"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Filter by Subject"
+          className="w-full p-2 border rounded-lg mb-2"
+        />
+
+        {/* Filter by Status */}
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="w-full p-2 border rounded-lg mb-2"
+        >
+          <option value="">Filter by Status</option>
+          <option value="OPEN">Open</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="CLOSED">Closed</option>
+        </select>
+
+        {/* Filter by Date Range */}
+        <div className="flex space-x-4">
+          <div className="w-full">
+            <input
+              type="date"
+              value={createdAtFrom}
+              onChange={(e) => setCreatedAtFrom(e.target.value)}
+              className="w-full p-2 border rounded-lg mb-2"
+            />
+            <label className="text-sm text-gray-500">From</label>
+          </div>
+          <div className="w-full">
+            <input
+              type="date"
+              value={createdAtTo}
+              onChange={(e) => setCreatedAtTo(e.target.value)}
+              className="w-full p-2 border rounded-lg mb-2"
+            />
+            <label className="text-sm text-gray-500">To</label>
+          </div>
+        </div>
+
+        {/* Apply Filters Button */}
+        <button
+          onClick={() => fetchTickets()}
+          className="w-full mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
+        >
+          Apply Filters
+        </button>
+      </div>
+
       {/* Ticket List */}
       {tickets.length === 0 ? (
         <p>No tickets created yet.</p>
@@ -119,11 +188,11 @@ const Page = () => {
               key={ticket.id}
               className="border p-4 rounded-lg shadow-md bg-white"
             >
-              <div className=" flex justify-between ">
+              <div className="flex justify-between">
                 <h2 className="text-xl font-semibold">{ticket?.subject}</h2>
                 <button
                   onClick={() => deleteTicket(ticket?.id)}
-                  className=" text-white bg-red-500 rounded-md px-2 py-1"
+                  className="text-white bg-red-500 rounded-md px-2 py-1"
                 >
                   delete
                 </button>
