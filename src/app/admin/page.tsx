@@ -1,6 +1,8 @@
 "use client";
 import Navbar from "@/components/Navbar";
+import Pagination from "@/components/Pagination";
 import React, { useEffect, useState } from "react";
+import page from "./tickets/page";
 
 type Props = {};
 
@@ -13,6 +15,9 @@ const Page = (props: Props) => {
   const [createdAtFrom, setCreatedAtFrom] = useState("");
   const [createdAtTo, setCreatedAtTo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit, setLimit] = useState(4);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value.toLowerCase();
@@ -27,6 +32,8 @@ const Page = (props: Props) => {
       subject,
       createdAtFrom,
       createdAtTo,
+      page: page.toString(),
+      limit: limit.toString(),
     });
 
     // Replace with actual fetch request
@@ -36,6 +43,7 @@ const Page = (props: Props) => {
     const ticketsData = await fetchedTickets.json();
 
     setTickets(ticketsData?.tickets);
+    setTotalPages(ticketsData?.totalPages);
     setIsLoading(false);
   }
 
@@ -44,7 +52,7 @@ const Page = (props: Props) => {
     // Replace with actual fetch request
     const fetchedUsers = await fetch("/api/users");
     const usersData = await fetchedUsers.json();
-    console.log(usersData);
+
     setUsers(usersData);
   }
 
@@ -71,7 +79,7 @@ const Page = (props: Props) => {
   useEffect(() => {
     fetchTickets();
     fetchUsers();
-  }, [status, subject, createdAtFrom, createdAtTo]);
+  }, [status, subject, createdAtFrom, createdAtTo, page, limit]);
 
   const handleReplySubmit = async (e: React.FormEvent, ticketId: number) => {
     e.preventDefault();
@@ -95,62 +103,64 @@ const Page = (props: Props) => {
     <div className="max-w-4xl mx-auto py-8">
       <Navbar />
       <div className=" flex gap-4">
-        <div className="bg-gray-100 p-4 min-w-[300px] rounded-lg mb-6">
-          <h2 className="text-xl font-semibold mb-3">Filter Tickets</h2>
+        <div>
+          {" "}
+          <div className="bg-gray-100 p-4 min-w-[300px] rounded-lg mb-6">
+            <h2 className="text-xl font-semibold mb-3">Filter Tickets</h2>
 
-          {/* Search Bar */}
-          <input
-            type="text"
-            value={subject}
-            onChange={handleSearch}
-            placeholder="Search tickets by subject or customer email..."
-            className="w-full p-2 border rounded-lg mb-4"
-          />
-
-          {/* Status Filter */}
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-4"
-          >
-            <option value="">Filter by Status</option>
-            <option value="OPEN">Open</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="CLOSED">Closed</option>
-          </select>
-
-          {/* Date Range Filters */}
-
-          <div className="w-full">
-            <label className="text-sm text-gray-500">From</label>
-
+            {/* Search Bar */}
             <input
-              type="date"
-              value={createdAtFrom}
-              onChange={(e) => setCreatedAtFrom(e.target.value)}
-              className="w-full p-2 border rounded-lg mb-2"
+              type="text"
+              value={subject}
+              onChange={handleSearch}
+              placeholder="Search tickets by subject or customer email..."
+              className="w-full p-2 border rounded-lg mb-4"
             />
-          </div>
-          <div className="w-full">
-            <label className="text-sm text-gray-500">To</label>
 
-            <input
-              type="date"
-              value={createdAtTo}
-              onChange={(e) => setCreatedAtTo(e.target.value)}
-              className="w-full p-2 border rounded-lg mb-2"
-            />
-          </div>
+            {/* Status Filter */}
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full p-2 border rounded-lg mb-4"
+            >
+              <option value="">Filter by Status</option>
+              <option value="OPEN">Open</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+            </select>
 
-          {/* Apply Filters Button */}
-          <button
-            onClick={() => fetchTickets()}
-            className="w-full mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-          >
-            Apply Filters
-          </button>
+            {/* Date Range Filters */}
+
+            <div className="w-full">
+              <label className="text-sm text-gray-500">From</label>
+
+              <input
+                type="date"
+                value={createdAtFrom}
+                onChange={(e) => setCreatedAtFrom(e.target.value)}
+                className="w-full p-2 border rounded-lg mb-2"
+              />
+            </div>
+            <div className="w-full">
+              <label className="text-sm text-gray-500">To</label>
+
+              <input
+                type="date"
+                value={createdAtTo}
+                onChange={(e) => setCreatedAtTo(e.target.value)}
+                className="w-full p-2 border rounded-lg mb-2"
+              />
+            </div>
+
+            {/* Apply Filters Button */}
+            <button
+              onClick={() => fetchTickets()}
+              className="w-full mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
+            >
+              Apply Filters
+            </button>
+          </div>
         </div>
-
         {/* Ticket Section */}
         {tickets.length === 0 ? (
           <p>No tickets available.</p>
@@ -234,6 +244,12 @@ const Page = (props: Props) => {
                 </div>
               ))
             )}
+            <Pagination
+              pageNo={page}
+              pageSize={limit}
+              totalPages={totalPages}
+              setPageNo={setPage}
+            />
           </div>
         )}
       </div>
